@@ -34,10 +34,10 @@ intcon = [[1,2,3],[10,11,12],[13,14,15]]; %MILP problem, input should be integer
 
 A = [C,[0,0,0],[0,0,0],[0,0,0],[0,0,0];
     Weights{1},-I,O,O,O; 
-    -Weights{1},I,O,1000*I,O;
+    -Weights{1},I,O,M*I,O;
     O,I,O,-M*I,O;
     O,Weights{2},-I,O,O; 
-    O,-Weights{2},I,O,1000*I;
+    O,-Weights{2},I,O,M*I;
     O,O,I,O,-M*I]
 
 b = [2475.6;
