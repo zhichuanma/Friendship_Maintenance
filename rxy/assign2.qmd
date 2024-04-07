@@ -1,0 +1,150 @@
+---
+title: "Assignment_02"
+format: 
+  pdf: 
+    toc: true
+    number-sections: true
+---
+
+# Question
+
+**(20 marks)** We consider the artificial neural network (ANN) with two hidden layers that we studied in Assignment 1 (see the following Figure 1), and let the activation function be the rectified linear unit (ReLU). The ReLU-ANN has been trained with a dataset and the training results are shown in Table 1. Let y = gANN (x0,1, x0,2, x0,3) be the trained ReLU-ANN model.
+
+We are to solve the following optimization problem that involves the ReLU-ANN model:
+
+Minimize:
+$$
+y - 1.08x_{0,2}
+$$
+Subject to:
+$$y = g_{ANN}(x_{0,1}, x_{0,2}, x_{0,3})$$
+$$-2475x_{0,1} + 4703x_{0,2} - 2475.6 \leq 0$$
+$$-1 \leq x_{0,1} \leq 1$$
+$$-1 \leq x_{0,2} \leq 1$$
+$$-1 \leq x_{0,3} \leq 1$$
+Please answer the following questions (either in Chinese or in English):
+
+## Express the optimization problem as a mixed-integer linear programming (MILP) problem, and solve it with MATLAB ”intlinprog”. Please include your MATLAB codes in the answer. (8 marks) (Note: You need some ”big-M” value in the formulation. Please use a value that is big enough but not overly large)
+
+For the first hidden layer's nodes, the calculations using the ReLU activation function are:
+
+- For node $j$:
+  $$ h_{1,j} = \max(0, w_{0,1j} \times x_{0,1} - w_{0,2j} \times x_{0,2} + w_{0,3j} \times x_{0,3} + b_{1,j}) $$
+
+The ReLU activation applies a threshold operation to the weighted sum of inputs and biases at each node. In addition, since the objective function is not linear, the first thing should be done is to linearlize the objective function. In other words, we need to linearlize the constraint $y = g_{ANN}(x_{0,1}, x_{0,2}, x_{0,3})$. Big-M method is used.
+
+Since y = ReLU(f) is equivalent to the $y = max(f,0)$, and $y = max(x,0)$ could be denoted as
+$$ y \geq f$$
+$$y \geq 0$$
+$$y \leq f + M(1-z)$$
+$$y <= Mz$$
+
+where,
+ - M is a number which is big enough;
+ - z is a binary variable.
+
+Thus, based on this transformation, we can decomposite the problem, for layer 1, the output is $[x_{11}, x_{12}, x_{13}]^T$ 
+$$
+x_{11} \geq w_{0,11}x_{01} + w_{0,21}x_{02} + w_{31}x_{03} + b_{11} 
+$$
+$$
+x_{11} \geq 0 
+$$ 
+$$x_{11} \leq w_{0,11}x_{01} + w_{0,21}x_{02} + w_{31}x_{03} + b_{11} + M(1-z_{11})$$
+$$x_{11} <= Mz_{11}$$
+The same things happen for $x_{12}$ and $x_{13}$ and also the different layers, thus a general universal expression can be written as:
+$$
+x_{kj} \geq w_{k-1,1j}x_{(k-1)1} + w_{k-1,2j}x_{(k-1)2} + w_{k-1,3j}x_{(k-1)3} + b_{kj} 
+$$
+$$
+x_{kj} \geq 0 
+$$ 
+$$x_{kj} \leq w_{k-1,1j}x_{(k-1)1} + w_{k-1,2j}x_{(k-1)2} + w_{k-1,3j}x_{(k-1)3} + b_{kj} + M(1-z_{kj})$$
+$$x_{kj} <= Mz_{kj}$$
+
+And write it into matrix format:
+$$
+X_{k} \geq W_{k-1}X_{(k-1)} + B_{k}
+$$
+$$
+X_{k} \geq 0 
+$$ 
+$$X_{k} \leq W_{k-1}X_{k-1} + B_{k} + M(I-Z_{k})$$
+$$X_{k} \leq MZ_{k}$$
+
+And finally we will get $[x_{21}, x_{22}, x_{23}]^T$, then,
+$$
+y = w_{2,11}x_{21} + w_{2,21}x_{22} + w_{2,31}x_{23} + b_{31} 
+$$
+$$
+y = W_{2}X_{2} + B_{3}
+$$
+
+The objective function can be denoted as: $y = W_{2}X_{2} + B_{3} - 1.08x_{0,2}$
+
+Since here $x_{0,2}$ is not a matrix element, we need to replace it. Obviously we have:
+$$
+\begin{bmatrix}
+0 & -1.08 & 0 
+\end{bmatrix}
+\begin{bmatrix}
+x_{01} \\ x_{02} \\ x_{03}
+\end{bmatrix}
+= -1.08x_{0,2}
+$$
+
+Let $[0, -1.08, 0]$ be $A$, the objective function will be:
+$$
+y = W_{2}X_{2} + B_{3} - AX_{0}
+$$
+Similarly,
+$$
+\begin{bmatrix}
+-2475 & 4703 & 0 
+\end{bmatrix}
+\begin{bmatrix}
+x_{01} \\ x_{02} \\ x_{03}
+\end{bmatrix}
+- 2475.6
+= -2475x_{0,1} + 4703x_{0,2} - 2475.6
+$$
+Let $[-2475,4703,0]$ be $C$:
+$$
+CX_{0} - 2475.6 \leq 0
+$$
+**Conclusively,**
+
+**Objective fucntion:**
+minimize
+$$
+y - AX_{0}
+$$
+$$
+A = [0, -1.08, 0]
+$$
+**is subject to constraints:**
+$$CX_{0} - 2475.6 \leq 0$$
+$$C = [-2475, 4703, 0]$$
+$$-1 \leq X_{0} \leq 1$$
+$$
+X_{k} \geq W_{k-1}X_{(k-1)} + B_{k}
+$$
+$$
+X_{k} \geq 0 
+$$ 
+$$X_{k} \leq W_{k-1}X_{k-1} + B_{k} + M(I-Z_{k})$$
+$$X_{k} \leq MZ_{k}$$
+$$
+k \in \{1,2\}
+$$
+$$
+y = W_{2}X_{2} + B_{3}
+$$
+**Ps: when a metrix is compared to a real number, it means you compare element wisely in Matlab.**
+
+Based on this general formulation, we implement it into matlab.
+
+## The convex relaxation of the MILP is a linear programming (LP) problem. Solve the LP problem with MATLAB ”linprog”. What is the relaxation gap (i.e., the difference between the optimal objective values of the LP relaxation and the original MILP)? Please include your MATLAB codes. (6 marks)
+
+## Write a Lagrangian dual problem of the MILP problem in part (a) such that any dual function can be calculated by solving two independent optimization problems, where one optimization problem includes output variables of the second hidden layer and the output layer and the other optimization problem includes output variables of the input layer and the first hidden layer. (6 marks)
+
