@@ -19,36 +19,33 @@ Biases = {
 Z = [0, -1.08, 0];
 C = [-2475, 4703, 0];
 I = eye(3);
-E = ones(3,3);
 O = zeros(3,3);
-% Ignore the constant in objective function
+
+% Ignore the constant in objective function temporarily
 const = Biases{3};
 
 % Optimization
-% Variables: X0, X1, X2, Z1, Z2 [3*1]
+% Variables: X0, X1, X2, [3*1]
 
 % Objective function
-f = [-Z, [0,0,0], Weights{3},[0,0,0],[0,0,0]] % -AX0 + 0X1 + W2X2 + 0Z1 + 0Z2
+f = [-Z, [0,0,0], Weights{3}] % -AX0 + 0X1 + W2X2
 
-intcon = [[1,2,3],[10,11,12],[13,14,15]]; %MILP problem, input should be integer, and variables z1 and z2 are binary 
-
-A = [C,[0,0,0],[0,0,0],[0,0,0],[0,0,0];
-    Weights{1},-I,O,O,O; 
-    -Weights{1},I,O,1000*I,O;
-    O,I,O,-M*I,O;
-    O,Weights{2},-I,O,O; 
-    O,-Weights{2},I,O,1000*I;
-    O,O,I,O,-M*I]
+A = [C,[0,0,0],[0,0,0];
+    Weights{1},-I,O; 
+    -Weights{1},I,O;
+    O,I,O;
+    O,Weights{2},-I; 
+    O,-Weights{2},I;
+    O,O,I]
 
 b = [2475.6;
     -Biases{1}; 
-    Biases{1}+M;
-    [0;0;0];
-    -Biases{2}; 
-    Biases{2}+M;
-    [0;0;0]]
+    -Biases{2};]
 
 ub = [[1;1;1]; [inf;inf;inf]; [inf;inf;inf]; [1;1;1]; [1;1;1]] % Upper bound
 lb = [[-1;-1;-1]; [0;0;0]; [0;0;0]; [0;0;0]; [0;0;0]] % Lowwer bound
 
-[x_optimal, fval] = intlinprog(f,intcon,A,b,[],[],lb,ub)
+[x_optimal, fval] = linprog(f,A,b,[],[],lb,ub);
+
+disp(x_optimal)%X0,X1,X2,Z1,Z2
+disp(fval + const)
